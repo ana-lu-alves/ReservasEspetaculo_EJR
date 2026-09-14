@@ -34,8 +34,8 @@
             margin: 0;
         }
 
-        /* TELAS DE CONTROLE DO TOKEN */
-        .tela-token-status {
+        /* TELAS DE STATUS */
+        .tela-status {
             background-color: var(--branco);
             width: 100%;
             max-width: 550px;
@@ -45,20 +45,9 @@
             box-shadow: 0 8px 25px rgba(27, 79, 114, 0.12);
             box-sizing: border-box;
         }
-        .tela-token-status h2 {
+        .tela-status h2 {
             margin-top: 0;
             font-weight: 900;
-        }
-        #tela-erro-token {
-            border-top: 6px solid var(--rosa-escola-escuro);
-            display: none;
-        }
-        #tela-erro-token h2 {
-            color: var(--rosa-escola-escuro);
-        }
-        #tela-verificando-token {
-            border-top: 6px solid var(--azul-alice-vestido);
-            display: block;
         }
 
         /* CABEÇALHO */
@@ -241,13 +230,6 @@
             margin-bottom: 15px;
         }
 
-        .aviso-limite-mapa {
-            font-size: 0.85rem;
-            color: var(--rosa-escola-escuro);
-            margin: -5px 0 0 0;
-            font-weight: 600;
-        }
-
         .teatro-container {
             width: 100%;
             position: relative;
@@ -428,15 +410,8 @@
             animation: fadeIn 0.3s ease-in;
         }
 
-        #loading { 
-            background-color: #FEFCBF; 
-            color: #975A16; 
-        }
-
-        #sucesso {
-            background-color: #D4EDDA; 
-            color: #155724; 
-        }
+        #loading { background-color: #FEFCBF; color: #975A16; }
+        #sucesso { background-color: #D4EDDA; color: #155724; }
 
         #sincronizando-mapa {
             background-color: #EBF5FB;
@@ -495,27 +470,15 @@
 </head>
 <body>
 
-    <div id="tela-verificando-token" class="tela-token-status">
-        <h2>Validando seu convite...</h2>
-        <p>Por favor, aguarde um instante enquanto verificamos suas credenciais de acesso.</p>
-    </div>
-
-    <div id="tela-erro-token" class="tela-token-status">
-        <h2>Acesso Não Autorizado</h2>
-        <p id="mensagem-erro-token">Este link de reserva é inválido ou já foi utilizado.</p>
-        <p style="font-size: 0.9rem; color: #555;">Caso precise de assistência, entre em contato diretamente com a direção da escola.</p>
-    </div>
-
-    <div id="tela-sucesso-reserva" class="tela-token-status" style="display: none; border-top: 6px solid var(--verde-livre); text-align: center;">
+    <div id="tela-sucesso-reserva" class="tela-status" style="display: none; border-top: 6px solid var(--verde-livre); text-align: center;">
         <h2 style="color: var(--verde-livre);">✅ Reserva Concluída!</h2>
         <p>Seus assentos foram reservados com sucesso na nossa base.</p>
         <p style="font-weight: 800; color: var(--azul-alice-escuro);">Aguardando confirmação de pagamento.</p>
         <hr style="border: none; border-top: 1px dashed var(--borda); margin: 20px 0;">
         <p style="font-size: 0.95rem; color: #718096;">Você já pode fechar esta página e retornar ao WhatsApp.</p>
-        <p style="font-size: 0.85rem; color: #A0AEC0;">Para sua segurança, este link de convite foi expirado e não poderá ser acessado novamente.</p>
     </div>
 
-    <div id="conteudo-sistema" style="display: none;">
+    <div id="conteudo-sistema">
         <div class="header-container">
             <img src="Logo_escola.jpg" alt="Logo Espaço Jessyca Rominna" class="logo-escola" onerror="this.style.display='none'">
             <div class="header-text">
@@ -566,7 +529,6 @@
             <div class="sessao-mapa">
                 <div class="cabecalho-mapa">
                     <h3>2. Selecione os assentos</h3>
-                    <p class="aviso-limite-mapa">Máximo de 6 assentos por reserva</p>
                 </div>
 
                 <div id="sincronizando-mapa" class="status-msg">Sincronizando mapa ao vivo... Aguarde!</div>
@@ -608,8 +570,6 @@
         const API_URL = 'https://script.google.com/macros/s/AKfycbx8f82E2ssaJ0Bl4Q_RI7O5oYL76FKgSVQDEv_EvqUUuTHnAD7xD7j1nSvXGCmCFnZL/exec'; 
         
         let poltronasEscolhidas = [];
-        const LIMITE_ASSENTOS = 6;
-        let tokenAtual = ""; 
 
         const estruturaTeatro = [
             { row: 'A', esq: [31, 25], cen: [24, 9], dir: [8, 3] },
@@ -716,21 +676,6 @@
         }
 
         window.onload = async function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            tokenAtual = urlParams.get('token');
-
-            const telaVerificando = document.getElementById('tela-verificando-token');
-            const telaErroToken = document.getElementById('tela-erro-token');
-            const msgErroToken = document.getElementById('mensagem-erro-token');
-            const conteudoSistema = document.getElementById('conteudo-sistema');
-
-            if (!tokenAtual) {
-                telaVerificando.style.display = 'none';
-                msgErroToken.innerText = "Nenhum código de convite (token) foi detectado na URL. Para fazer sua reserva, utilize o link exclusivo fornecido pela escola.";
-                telaErroToken.style.display = 'block';
-                return;
-            }
-
             desenharMapa();
 
             const inputTelefone = document.getElementById('telefone');
@@ -745,22 +690,8 @@
             }
 
             try {
-                const respostaServidor = await fetch(`${API_URL}?token=${encodeURIComponent(tokenAtual)}`);
+                const respostaServidor = await fetch(API_URL);
                 const respostaJSON = await respostaServidor.json();
-
-                telaVerificando.style.display = 'none';
-
-                if (respostaJSON.statusToken === "Usado") {
-                    msgErroToken.innerText = "Este link de convite já foi utilizado para concluir uma reserva. Não é permitido efetuar múltiplas reservas com o mesmo link.";
-                    telaErroToken.style.display = 'block';
-                    return;
-                } else if (respostaJSON.statusToken === "Invalido" || respostaJSON.erro) {
-                    msgErroToken.innerText = "O código de convite informado é inválido, expirou ou não consta na lista de presença autorizada.";
-                    telaErroToken.style.display = 'block';
-                    return;
-                }
-
-                conteudoSistema.style.display = 'block';
 
                 if (respostaJSON.ocupados) {
                     respostaJSON.ocupados.forEach(item => {
@@ -772,10 +703,8 @@
                 }
 
             } catch (error) {
-                console.error("Falha ao inicializar validação:", error);
-                telaVerificando.style.display = 'none';
-                msgErroToken.innerText = "Ocorreu uma falha crítica de conexão ao tentar validar seu convite. Por favor, cheque sua internet e tente recarregar.";
-                telaErroToken.style.display = 'block';
+                console.error("Falha ao sincronizar assentos:", error);
+                alert("Falha de conexão ao carregar os assentos ocupados.");
             } finally {
                 document.getElementById('sincronizando-mapa').style.display = 'none';
                 document.getElementById('container-do-teatro').style.pointerEvents = 'auto';
@@ -791,10 +720,6 @@
                 elemento.classList.remove('selecionada');
                 poltronasEscolhidas = poltronasEscolhidas.filter(p => p !== idPoltrona);
             } else {
-                if (poltronasEscolhidas.length >= LIMITE_ASSENTOS) {
-                    alert(`Você atingiu o limite máximo de ${LIMITE_ASSENTOS} assentos por reserva.`);
-                    return;
-                }
                 elemento.classList.add('selecionada');
                 poltronasEscolhidas.push(idPoltrona);
             }
@@ -834,7 +759,6 @@
             document.getElementById('btn-confirmar').disabled = true;
 
             const dados = {
-                token: tokenAtual, 
                 poltronas: poltronasEscolhidas,
                 nomePai: nomePai,
                 nomeFilha: nomeFilha,
